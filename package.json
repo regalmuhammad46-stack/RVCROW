@@ -1,0 +1,9 @@
+{
+  "name": "rvcrow",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "multiparty": "^4.2.3",
+    "form-data": "^4.0.0"
+  }
+}
