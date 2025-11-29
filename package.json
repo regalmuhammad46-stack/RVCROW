@@ -1,9 +1,14 @@
 {
   "name": "rvcrow",
   "version": "1.0.0",
+  "description": "RVCROW tracking engine",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "multiparty": "^4.2.3",
     "form-data": "^4.0.0"
   }
 }
+
